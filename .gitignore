@@ -37,3 +37,7 @@ coverage/
 # Misc
 *.tmp
 *.temp
+
+server/data/app.db
+server/data/app.db-shm
+server/data/app.db-wal
