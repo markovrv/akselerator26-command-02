@@ -1,0 +1,86 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import Home from './pages/Home';
+import RegisterPage from './pages/RegisterPage';
+import LoginPage from './pages/LoginPage';
+import AssessmentPage from './pages/AssessmentPage';
+import DashboardPage from './pages/DashboardPage';
+import RecommendationsPage from './pages/RecommendationsPage';
+import EnterprisesPage from './pages/EnterprisesPage';
+import EnterpriseDetailPage from './pages/EnterpriseDetailPage';
+import VacanciesPage from './pages/VacanciesPage';
+import VacancyDetailPage from './pages/VacancyDetailPage';
+import ToursPage from './pages/ToursPage';
+import MyApplicationsPage from './pages/MyApplicationsPage';
+import MyTourBookingsPage from './pages/MyTourBookingsPage';
+import './styles/globals.css';
+import './App.css';
+
+function App() {
+  return (
+    <Router>
+      <div className="app-layout">
+        <Header />
+        <main className="app-main container">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/auth/register" element={<RegisterPage />} />
+            <Route path="/auth/login" element={<LoginPage />} />
+
+            {/* Catalog */}
+            <Route path="/enterprises" element={<EnterprisesPage />} />
+            <Route path="/enterprise/:slug" element={<EnterpriseDetailPage />} />
+            <Route path="/vacancies" element={<VacanciesPage />} />
+            <Route path="/vacancy/:id" element={<VacancyDetailPage />} />
+            <Route path="/tours" element={<ToursPage />} />
+
+            {/* Dashboard */}
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/dashboard/assessment" element={<AssessmentPage />} />
+            <Route path="/dashboard/recommendations" element={<RecommendationsPage />} />
+            <Route path="/dashboard/applications" element={<MyApplicationsPage />} />
+            <Route path="/dashboard/tour-bookings" element={<MyTourBookingsPage />} />
+
+            {/* Placeholder routes */}
+            <Route path="/how-it-works" element={
+              <div className="page-content">
+                <div className="page-header">
+                  <h2>Как это работает</h2>
+                  <p>Найдите своё идеальное место работы на производстве</p>
+                </div>
+              </div>
+            } />
+            <Route path="/dashboard/profile" element={
+              <div className="page-content">
+                <div className="page-header">
+                  <h2>Профиль</h2>
+                  <p>Скоро доступно</p>
+                </div>
+              </div>
+            } />
+            <Route path="/dashboard/digital-passport" element={
+              <div className="page-content">
+                <div className="page-header">
+                  <h2>Цифровой паспорт</h2>
+                  <p>Скоро доступно</p>
+                </div>
+              </div>
+            } />
+            <Route path="/dashboard/messages" element={
+              <div className="page-content">
+                <div className="page-header">
+                  <h2>Сообщения</h2>
+                  <p>Скоро доступно</p>
+                </div>
+              </div>
+            } />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </Router>
+  );
+}
+
+export default App;
