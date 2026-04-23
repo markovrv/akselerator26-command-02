@@ -43,6 +43,19 @@ class EnterpriseService {
     return enterprise;
   }
 
+  async getById(id) {
+    const enterprise = await Enterprise.findByPk(id, {
+      include: [
+        { model: Vacancy, where: { status: 'published' }, required: false },
+        { model: Tour, where: { status: 'open' }, required: false }
+      ]
+    });
+    if (!enterprise) {
+      throw { statusCode: 404, message: 'Enterprise not found' };
+    }
+    return enterprise;
+  }
+
   async create(data) {
     const enterprise = await Enterprise.create({
       ...data,

@@ -1,7 +1,12 @@
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 import { FiArrowRight, FiTarget, FiUsers, FiBarChart } from 'react-icons/fi';
 
 export default function Home() {
+  const { isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
+  
   return (
     <div className="home-page">
       {/* Hero Section */}
@@ -15,9 +20,15 @@ export default function Home() {
             оплате, карьерным возможностям и формату знакомства с производством.
           </p>
           <div className="hero-actions">
-            <Link to="/auth/register" className="btn btn-primary btn-lg">
-              Пройти подбор <FiArrowRight />
-            </Link>
+            {isAuthenticated ? (
+              <button onClick={() => navigate('/dashboard/assessment')} className="btn btn-primary btn-lg">
+                Пройти подбор <FiArrowRight />
+              </button>
+            ) : (
+              <Link to="/auth/register" className="btn btn-primary btn-lg">
+                Пройти подбор <FiArrowRight />
+              </Link>
+            )}
             <Link to="/enterprises" className="btn btn-outline">
               Смотреть предприятия
             </Link>

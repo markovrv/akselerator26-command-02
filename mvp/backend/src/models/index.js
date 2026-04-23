@@ -63,6 +63,9 @@ MessageThread.belongsTo(Enterprise, { foreignKey: 'enterpriseId', as: 'enterpris
 Vacancy.hasMany(MessageThread, { foreignKey: 'vacancyId' });
 MessageThread.belongsTo(Vacancy, { foreignKey: 'vacancyId' });
 
+User.belongsTo(Enterprise, { foreignKey: 'enterpriseId' });
+Enterprise.hasMany(User, { foreignKey: 'enterpriseId' });
+
 module.exports = {
   User,
   UserProfile,

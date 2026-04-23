@@ -26,7 +26,14 @@ const ASSESSMENT_QUESTIONS = [
   {
     code: 'q5',
     text: 'Какой уровень зарплаты вы ожидаете?',
-    type: 'range',
+    type: 'single_choice',
+    options: [
+      'до 40 000 ₽',
+      '40 000 - 60 000 ₽',
+      '60 000 - 80 000 ₽',
+      '80 000 - 120 000 ₽',
+      'свыше 120 000 ₽'
+    ],
   },
   {
     code: 'q6',

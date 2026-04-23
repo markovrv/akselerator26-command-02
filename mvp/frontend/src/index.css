@@ -85,10 +85,6 @@ a {
   transition: color 0.2s ease;
 }
 
-a:hover {
-  color: var(--color-primary-hover);
-}
-
 img {
   max-width: 100%;
   height: auto;
@@ -124,6 +120,8 @@ img {
   position: sticky;
   top: 0;
   z-index: 100;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
 }
 
 .header-inner {
@@ -598,6 +596,6 @@ img {
 }
 
 /* Button color override fix */
-a.btn, a.btn-primary, a.btn-secondary, a.btn-outline {
-  color: inherit;
+a.btn-primary {
+  color: white;
 }

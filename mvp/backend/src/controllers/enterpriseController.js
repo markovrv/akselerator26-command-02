@@ -1,5 +1,7 @@
 const enterpriseService = require('../services/enterpriseService');
-
+const vacancyService = require('../services/vacancyService');
+const applicationService = require('../services/applicationService');
+const tourService = require('../services/tourService');
 class EnterpriseController {
   async getAll(req, res, next) {
     try {
@@ -41,6 +43,120 @@ class EnterpriseController {
       next(error);
     }
   }
+
+  async getDashboard(req, res, next) {
+    try {
+      const enterpriseId = req.user.enterpriseId;
+      const vacanciesCount = await vacancyService.countByEnterprise(enterpriseId);
+      const applicationsCount = await applicationService.countByEnterprise(enterpriseId);
+      const toursCount = await tourService.countByEnterprise(enterpriseId);
+      res.json({ vacanciesCount, applicationsCount, toursCount });
+    } catch (error) { next(error); }
+  }
+
+  async getMyVacancies(req, res, next) {
+    try {
+      const enterpriseId = req.user.enterpriseId;
+      const vacancies = await vacancyService.getByEnterprise(enterpriseId);
+      res.json({ vacancies });
+    } catch (error) { next(error); }
+  }
+
+  async createVacancy(req, res, next) {
+    try {
+      const enterpriseId = req.user.enterpriseId;
+      const vacancy = await vacancyService.create(enterpriseId, req.body);
+      res.status(201).json(vacancy);
+    } catch (error) { next(error); }
+  }
+
+  async updateVacancy(req, res, next) {
+    try {
+      const { id } = req.params;
+      const enterpriseId = req.user.enterpriseId;
+      const vacancy = await vacancyService.update(id, req.body, enterpriseId);
+      res.json(vacancy);
+    } catch (error) { next(error); }
+  }
+
+  async deleteVacancy(req, res, next) {
+    try {
+      const { id } = req.params;
+      const enterpriseId = req.user.enterpriseId;
+      await vacancyService.archive(id, enterpriseId);
+      res.status(204).send();
+    } catch (error) { next(error); }
+  }
+
+  async getEnterpriseApplications(req, res, next) {
+    try {
+      const enterpriseId = req.user.enterpriseId;
+      const applications = await applicationService.getByEnterprise(enterpriseId);
+      res.json({ applications });
+    } catch (error) { next(error); }
+  }
+
+  async updateApplicationStatus(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const enterpriseId = req.user.enterpriseId;
+      const application = await applicationService.updateStatusForEnterprise(id, status, enterpriseId);
+      res.json(application);
+    } catch (error) { next(error); }
+  }
+
+  async getMyTours(req, res, next) {
+    try {
+      const enterpriseId = req.user.enterpriseId;
+      const tours = await tourService.getByEnterprise(enterpriseId);
+      res.json({ tours });
+    } catch (error) { next(error); }
+  }
+
+  async createTour(req, res, next) {
+    try {
+      const enterpriseId = req.user.enterpriseId;
+      const tour = await tourService.create(enterpriseId, req.body);
+      res.status(201).json(tour);
+    } catch (error) { next(error); }
+  }
+
+  async updateTour(req, res, next) {
+    try {
+      const { id } = req.params;
+      const enterpriseId = req.user.enterpriseId;
+      const tour = await tourService.update(id, req.body, enterpriseId);
+      res.json(tour);
+    } catch (error) { next(error); }
+  }
+
+  async getTourBookings(req, res, next) {
+    try {
+      const { id } = req.params;
+      const enterpriseId = req.user.enterpriseId;
+      const bookings = await tourService.getBookingsByTour(id, enterpriseId);
+      res.json({ bookings });
+    } catch (error) { next(error); }
+  }
+
+  async getEnterpriseProfile(req, res, next) {
+    try {
+      const enterpriseId = req.user.enterpriseId;
+      const profile = await enterpriseService.getById(enterpriseId);
+      res.json(profile);
+    } catch (error) { next(error); }
+  }
+
+  async updateEnterpriseProfile(req, res, next) {
+    try {
+      const enterpriseId = req.user.enterpriseId;
+      const profile = await enterpriseService.update(enterpriseId, req.body);
+      res.json(profile);
+    } catch (error) { next(error); }
+  }
+
+
 }
 
 module.exports = new EnterpriseController();

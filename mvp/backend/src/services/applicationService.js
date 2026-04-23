@@ -91,6 +91,42 @@ class ApplicationService {
     await application.update({ status });
     return application;
   }
+
+  async getByEnterprise(enterpriseId) {
+    return await Application.findAll({
+      include: [{
+        model: Vacancy,
+        where: { enterpriseId },
+        required: true,
+        include: [{ model: Enterprise }],
+      }, {
+        model: User,
+        attributes: ['id', 'email'],
+        include: ['UserProfile'],
+      }],
+      order: [['createdAt', 'DESC']],
+    });
+  }
+
+  async countByEnterprise(enterpriseId) {
+    return await Application.count({
+      include: [{ model: Vacancy, where: { enterpriseId }, required: true }],
+    });
+  }
+
+  async updateStatusForEnterprise(applicationId, status, enterpriseId) {
+    const application = await Application.findOne({
+      include: [{ model: Vacancy, where: { enterpriseId }, required: true }],
+      where: { id: applicationId },
+    });
+    if (!application) throw { statusCode: 404, message: 'Application not found or access denied' };
+    if (!['new', 'viewed', 'invited', 'rejected', 'hired'].includes(status)) {
+      throw { statusCode: 400, message: 'Invalid status' };
+    }
+    await application.update({ status });
+    return application;
+  }
+
 }
 
 module.exports = new ApplicationService();

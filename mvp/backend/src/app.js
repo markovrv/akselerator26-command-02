@@ -13,6 +13,7 @@ const enterpriseRoutes = require('./routes/enterprises');
 const vacancyRoutes = require('./routes/vacancies');
 const tourRoutes = require('./routes/tours');
 const applicationRoutes = require('./routes/applications');
+const enterprisePrivateRoutes = require('./routes/enterprise');
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use(`${apiPrefix}/enterprises`, enterpriseRoutes);
 app.use(`${apiPrefix}/vacancies`, vacancyRoutes);
 app.use(`${apiPrefix}/tours`, tourRoutes);
 app.use(`${apiPrefix}/applications`, applicationRoutes);
+app.use(`${apiPrefix}/enterprise`, enterprisePrivateRoutes);
 
 // 404 handler
 app.use((req, res) => {

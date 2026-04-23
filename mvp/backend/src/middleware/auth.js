@@ -2,17 +2,14 @@ const jwt = require('jsonwebtoken');
 const env = require('../config/env');
 
 const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token provided' });
   try {
-    const token = req.headers.authorization?.split(' ')[1];
-
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
-
     const decoded = jwt.verify(token, env.jwt.secret);
-    req.user = decoded;
+    req.user = decoded;   // здесь должно быть поле enterpriseId
+    console.log('Decoded:', decoded);
     next();
-  } catch (_error) {
+  } catch (err) {
     return res.status(401).json({ error: 'Invalid token' });
   }
 };
@@ -45,8 +42,28 @@ const roleCheck = (...roles) => {
   };
 };
 
-module.exports = {
-  authMiddleware,
-  optionalAuth,
-  roleCheck,
+const requireEnterpriseRole = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  if (req.user.role !== 'enterprise_user') {
+    return res.status(403).json({ error: 'Enterprise role required' });
+  }
+  if (!req.user.enterpriseId) {
+    return res.status(403).json({ error: 'Enterprise ID missing in token. Please re-login.' });
+  }
+  next();
 };
+
+const checkEnterpriseOwnership = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const enterpriseId = req.params?.enterpriseId || req.body?.enterpriseId || req.query?.enterpriseId;
+  if (enterpriseId && enterpriseId !== req.user.enterpriseId) {
+    return res.status(403).json({ error: 'Access denied: wrong enterprise' });
+  }
+  next();
+};
+
+module.exports = { authMiddleware, optionalAuth, requireEnterpriseRole, checkEnterpriseOwnership };

@@ -25,17 +25,14 @@ class ProfileController {
   async setRole(req, res, next) {
     try {
       const userId = req.user.id;
-      const { role } = req.body;
-
-      if (!role) {
-        return res.status(400).json({ error: 'Role required' });
+      const { role, enterpriseId } = req.body;
+      if (!role) return res.status(400).json({ error: 'Role required' });
+      if (role === 'enterprise_user' && !enterpriseId) {
+        return res.status(400).json({ error: 'enterpriseId required for enterprise_user role' });
       }
-
-      const user = await profileService.setRole(userId, role);
+      const user = await profileService.setRole(userId, role, enterpriseId);
       res.json({ user });
-    } catch (error) {
-      next(error);
-    }
+    } catch (error) { next(error); }
   }
 }
 

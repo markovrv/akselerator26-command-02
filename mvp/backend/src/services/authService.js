@@ -29,16 +29,10 @@ class AuthService {
 
   async login(email, password) {
     const user = await User.findOne({ where: { email: email.toLowerCase() } });
-
-    if (!user) {
-      throw { statusCode: 401, message: 'Invalid credentials' };
-    }
-
-    const isPasswordValid = await user.checkPassword(password);
-    if (!isPasswordValid) {
-      throw { statusCode: 401, message: 'Invalid credentials' };
-    }
-
+    if (!user) throw { statusCode: 401, message: 'Invalid credentials' };
+    const isValid = await user.checkPassword(password);
+    if (!isValid) throw { statusCode: 401, message: 'Invalid credentials' };
+    await user.reload();
     return this.generateTokens(user);
   }
 
@@ -56,32 +50,15 @@ class AuthService {
   }
 
   generateTokens(user) {
-    const accessToken = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
-      env.jwt.secret,
-      { expiresIn: env.jwt.expiresIn }
-    );
-
-    const refreshToken = jwt.sign(
-      { id: user.id },
-      env.jwt.refreshSecret,
-      { expiresIn: env.jwt.refreshExpiresIn }
-    );
-
-    return {
-      accessToken,
-      refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-      },
+    const payload = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      enterpriseId: user.enterpriseId || null,   // критично
     };
+    const accessToken = jwt.sign(payload, env.jwt.secret, { expiresIn: env.jwt.expiresIn });
+    const refreshToken = jwt.sign({ id: user.id }, env.jwt.refreshSecret, { expiresIn: env.jwt.refreshExpiresIn });
+    return { accessToken, refreshToken, user: { id: user.id, email: user.email, role: user.role } };
   }
 
   async refreshAccessToken(refreshToken) {

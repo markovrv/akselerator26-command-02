@@ -1,21 +1,45 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { FiEdit, FiFileText, FiTarget, FiMessageSquare } from 'react-icons/fi';
+import { useAssessmentStore } from '../store/assessmentStore';
+import { FiEdit, FiTrendingUp, FiTarget, FiClipboard } from 'react-icons/fi';
+import { applicationsAPI } from '../services/api';
 
 export default function DashboardPage() {
   const { isAuthenticated } = useAuthStore();
+  const { recommendations, getRecommendations, sessionId } = useAssessmentStore();
   const navigate = useNavigate();
+  const [applicationsCount, setApplicationsCount] = useState(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/auth/login');
+      return;
     }
-  }, [isAuthenticated, navigate]);
+
+    // Загружаем отклики
+    const fetchApplications = async () => {
+      try {
+        const { data } = await applicationsAPI.getMyApplications();
+        setApplicationsCount(data.count);
+      } catch (err) {
+        console.error('Failed to load applications:', err);
+        setApplicationsCount(0);
+      }
+    };
+    fetchApplications();
+
+    // Если есть активная сессия, но рекомендации ещё не загружены – подгружаем
+    if (sessionId && (!recommendations || recommendations.length === 0)) {
+      getRecommendations();
+    }
+  }, [isAuthenticated, navigate, sessionId, getRecommendations]);
 
   if (!isAuthenticated) {
     return null;
   }
+
+  const recommendationsCount = recommendations?.length || 0;
 
   return (
     <div className="min-h-screen bg-light py-12">
@@ -35,19 +59,19 @@ export default function DashboardPage() {
             <p className="text-sm text-gray-600">Отредактировать данные</p>
           </Link>
 
-          {/* Digital Passport Card */}
+          {/* My Recommendations Card (заменяет Цифровой паспорт) */}
           <Link
-            to="/dashboard/digital-passport"
+            to="/dashboard/recommendations"
             className="card hover:shadow-md transition transform hover:scale-105"
           >
             <div className="text-accent text-3xl mb-4">
-              <FiFileText />
+              <FiTrendingUp />
             </div>
-            <h3 className="font-bold mb-2">Цифровой паспорт</h3>
-            <p className="text-sm text-gray-600">Ваш профиль и интересы</p>
+            <h3 className="font-bold mb-2">Мои рекомендации</h3>
+            <p className="text-sm text-gray-600">Список подобранных вакансий</p>
           </Link>
 
-          {/* Recommendations Card */}
+          {/* Assessment Card */}
           <Link
             to="/dashboard/assessment"
             className="card hover:shadow-md transition transform hover:scale-105"
@@ -59,16 +83,16 @@ export default function DashboardPage() {
             <p className="text-sm text-gray-600">Получить рекомендации</p>
           </Link>
 
-          {/* Messages Card */}
+          {/* My Applications Card */}
           <Link
-            to="/dashboard/messages"
+            to="/dashboard/applications"
             className="card hover:shadow-md transition transform hover:scale-105"
           >
             <div className="text-accent text-3xl mb-4">
-              <FiMessageSquare />
+              <FiClipboard />
             </div>
-            <h3 className="font-bold mb-2">Сообщения</h3>
-            <p className="text-sm text-gray-600">Диалоги с HR</p>
+            <h3 className="font-bold mb-2">Мои отклики</h3>
+            <p className="text-sm text-gray-600">Отклики на вакансии</p>
           </Link>
         </div>
 
@@ -76,7 +100,9 @@ export default function DashboardPage() {
         <div className="grid grid-cols-3 gap-6">
           <div className="card bg-gradient-to-br from-blue-50 to-blue-100">
             <h4 className="text-sm text-gray-600 mb-2">Мои отклики</h4>
-            <p className="text-3xl font-bold text-accent">0</p>
+            <p className="text-3xl font-bold text-accent">
+              {applicationsCount !== null ? applicationsCount : '...'}
+            </p>
             <p className="text-xs text-gray-500 mt-2">на вакансии</p>
           </div>
 
@@ -88,8 +114,8 @@ export default function DashboardPage() {
 
           <div className="card bg-gradient-to-br from-purple-50 to-purple-100">
             <h4 className="text-sm text-gray-600 mb-2">Рекомендации</h4>
-            <p className="text-3xl font-bold">0</p>
-            <p className="text-xs text-gray-500 mt-2">предприятий</p>
+            <p className="text-3xl font-bold">{recommendationsCount}</p>
+            <p className="text-xs text-gray-500 mt-2">предприятий и вакансий</p>
           </div>
         </div>
       </div>

@@ -119,6 +119,32 @@ class TourService {
 
     return bookings;
   }
+
+  async getByEnterprise(enterpriseId) {
+    return await Tour.findAll({ where: { enterpriseId }, order: [['startAt', 'ASC']] });
+  }
+
+  async countByEnterprise(enterpriseId) {
+    return await Tour.count({ where: { enterpriseId } });
+  }
+
+  async update(id, data, enterpriseId) {
+    const tour = await Tour.findOne({ where: { id, enterpriseId } });
+    if (!tour) throw { statusCode: 404, message: 'Tour not found or access denied' };
+    await tour.update(data);
+    return tour;
+  }
+
+  async getBookingsByTour(tourId, enterpriseId) {
+    const tour = await Tour.findOne({ where: { id: tourId, enterpriseId } });
+    if (!tour) throw { statusCode: 404, message: 'Tour not found or access denied' };
+    const bookings = await TourBooking.findAll({
+      where: { tourId },
+      include: [{ model: User, attributes: ['id', 'email'], include: ['UserProfile'] }],
+    });
+    return bookings;
+  }
+
 }
 
 module.exports = new TourService();

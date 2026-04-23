@@ -1,12 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { FiLogOut, FiUser, FiMenu, FiX } from 'react-icons/fi';
+import { authAPI } from '../services/api';
 
 export default function Header() {
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { isAuthenticated, user, logout, setUser, accessToken } = useAuthStore();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Fetch user profile on mount if authenticated
+  useEffect(() => {
+    if (accessToken && !user) {
+      (async () => {
+        try {
+          const { data } = await authAPI.getProfile();
+          setUser(data.user);
+        } catch (e) {
+          logout();
+        }
+      })();
+    }
+  }, [accessToken, user, setUser, logout]);
 
   const handleLogout = () => {
     logout();

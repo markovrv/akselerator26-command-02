@@ -61,8 +61,9 @@ export default function RegisterForm() {
           formData.fullName,
           formData.role
         );
-        navigate('/dashboard/profile');
+        navigate('/dashboard');
       } catch (err) {
+        navigate('/dashboard');
         setError(err.response?.data?.error || 'Ошибка регистрации');
         setIsLoading(false);
       }

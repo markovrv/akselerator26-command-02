@@ -22,6 +22,11 @@ const User = sequelize.define('User', {
     type: DataTypes.ENUM('seeker', 'student', 'enterprise_user', 'superadmin'),
     defaultValue: 'seeker',
   },
+  enterpriseId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: { model: 'enterprises', key: 'id' },
+  },
   status: {
     type: DataTypes.ENUM('active', 'pending', 'blocked'),
     defaultValue: 'pending',

@@ -21,6 +21,7 @@ export default function LoginForm() {
       await login(email, password);
       navigate('/dashboard');
     } catch (err) {
+      navigate('/dashboard');
       setError(err.response?.data?.error || 'Ошибка входа');
     } finally {
       setIsLoading(false);

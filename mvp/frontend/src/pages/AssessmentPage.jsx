@@ -3,6 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useAssessmentStore } from '../store/assessmentStore';
 
+const hasAnswer = (question, answers) => {
+  const answer = answers[question.code];
+  if (question.type === 'multi_choice') {
+    return !!(answer && answer.length > 0);
+  }
+  return answer !== undefined && answer !== null;
+};
+
 export default function AssessmentPage() {
   const { isAuthenticated } = useAuthStore();
   const {
@@ -19,6 +27,7 @@ export default function AssessmentPage() {
     nextQuestion,
     prevQuestion,
     completeAssessment,
+    reset,
   } = useAssessmentStore();
 
   const navigate = useNavigate();
@@ -29,18 +38,63 @@ export default function AssessmentPage() {
       return;
     }
 
-    if (!sessionId) {
+    // Если есть сессия, но вопросы не загружены – загружаем
+    if (sessionId && !questions.length) {
       fetchQuestions();
     }
-  }, [isAuthenticated, navigate, sessionId, fetchQuestions]);
+
+    // Если нет сессии и статус idle – загружаем вопросы (для нового старта)
+    if (!sessionId && status === 'idle') {
+      fetchQuestions();
+    }
+  }, [isAuthenticated, navigate, sessionId, questions.length, fetchQuestions, status]);
 
   useEffect(() => {
+    // Автоматически запускаем новую сессию ТОЛЬКО если нет сессии и статус idle
+    // и при этом НЕ завершена (status !== 'completed')
     if (!sessionId && status === 'idle') {
       startAssessment('seeker');
     }
   }, [sessionId, status, startAssessment]);
 
-  if (!sessionId) {
+  const handleResetAndRestart = () => {
+    const userConfirmed = window.confirm(
+      'Вы уверены? Все текущие ответы и сохранённые рекомендации будут удалены. Вы сможете пройти анкету заново.'
+    );
+    if (!userConfirmed) return;
+
+    reset();
+    fetchQuestions();
+    startAssessment('seeker');
+  };
+
+  const handleCompleteAssessment = async () => {
+    await completeAssessment();
+    // После успешного завершения переходим на рекомендации
+    navigate('/dashboard/recommendations');
+  };
+
+  // Если анкета уже пройдена – показываем экран с кнопкой "Пройти заново"
+  if (status === 'completed') {
+    return (
+      <div className="min-h-screen bg-light py-12">
+        <div className="container mx-auto max-w-2xl text-center">
+          <div className="bg-white rounded-lg shadow-md p-8">
+            <h2 className="text-2xl font-bold mb-4">Анкета уже пройдена</h2>
+            <p className="text-gray-600 mb-6">
+              Вы уже завершили анкету. Чтобы пройти её заново и обновить рекомендации, нажмите кнопку ниже.
+            </p>
+            <button onClick={handleResetAndRestart} className="btn-primary">
+              Пройти анкету заново
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Если нет сессии или вопросы не загружены – показываем загрузку
+  if (!sessionId || !questions.length) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -48,15 +102,6 @@ export default function AssessmentPage() {
         </div>
       </div>
     );
-  }
-
-  if (status === 'completed') {
-    navigate('/dashboard/recommendations');
-    return null;
-  }
-
-  if (!questions.length) {
-    return <div className="text-center py-8">Загрузка вопросов...</div>;
   }
 
   const currentQuestion = questions[currentQuestionIndex];
@@ -69,15 +114,20 @@ export default function AssessmentPage() {
     }
   };
 
-  const handleCompleteAssessment = async () => {
-    await completeAssessment();
-  };
-
   return (
     <div className="min-h-screen bg-light py-12">
       <div className="container mx-auto max-w-2xl">
         <div className="bg-white rounded-lg shadow-md p-8">
-          {/* Progress Bar */}
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={handleResetAndRestart}
+              className="text-sm text-gray-500 hover:text-error transition"
+              title="Пройти анкету заново"
+            >
+              Пройти заново
+            </button>
+          </div>
+
           <div className="mb-8">
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-bold">Шаг {currentQuestionIndex + 1} из {questions.length}</h3>
@@ -91,7 +141,6 @@ export default function AssessmentPage() {
             </div>
           </div>
 
-          {/* Question */}
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-6">{currentQuestion.text}</h2>
 
@@ -177,7 +226,6 @@ export default function AssessmentPage() {
             )}
           </div>
 
-          {/* Navigation */}
           <div className="flex gap-4">
             <button
               onClick={prevQuestion}
@@ -198,7 +246,13 @@ export default function AssessmentPage() {
             ) : (
               <button
                 onClick={nextQuestion}
-                disabled={!answers[currentQuestion.code]}
+                disabled={!(() => {
+                  const answer = answers[currentQuestion.code];
+                  if (currentQuestion.type === 'multi_choice') {
+                    return !answer || answer.length === 0;
+                  }
+                  return answer === undefined || answer === null;
+                })()}
                 className="flex-1 btn-primary disabled:opacity-50"
               >
                 Далее →

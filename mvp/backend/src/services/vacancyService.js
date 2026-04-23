@@ -68,6 +68,27 @@ class VacancyService {
     await vacancy.update(data);
     return vacancy;
   }
+
+  async getByEnterprise(enterpriseId) {
+    return await Vacancy.findAll({ where: { enterpriseId }, order: [['createdAt', 'DESC']] });
+  }
+
+  async countByEnterprise(enterpriseId) {
+    return await Vacancy.count({ where: { enterpriseId } });
+  }
+
+  async update(id, data, enterpriseId) {
+    const vacancy = await Vacancy.findOne({ where: { id, enterpriseId } });
+    if (!vacancy) throw { statusCode: 404, message: 'Vacancy not found or access denied' };
+    await vacancy.update(data);
+    return vacancy;
+  }
+
+  async archive(id, enterpriseId) {
+    const vacancy = await Vacancy.findOne({ where: { id, enterpriseId } });
+    if (!vacancy) throw { statusCode: 404, message: 'Vacancy not found or access denied' };
+    await vacancy.update({ status: 'archived' });
+  }
 }
 
 module.exports = new VacancyService();

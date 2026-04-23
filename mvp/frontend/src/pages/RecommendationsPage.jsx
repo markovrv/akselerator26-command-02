@@ -6,7 +6,7 @@ import { FiStar, FiMapPin, FiDollarSign } from 'react-icons/fi';
 
 export default function RecommendationsPage() {
   const { isAuthenticated } = useAuthStore();
-  const { recommendations, getRecommendations, isLoading, error } = useAssessmentStore();
+  const { recommendations, getRecommendations, isLoading, error, sessionId } = useAssessmentStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -14,7 +14,6 @@ export default function RecommendationsPage() {
       navigate('/auth/login');
       return;
     }
-
     getRecommendations();
   }, [isAuthenticated, navigate, getRecommendations]);
 
@@ -30,7 +29,27 @@ export default function RecommendationsPage() {
     );
   }
 
-  if (error) {
+  // Если нет сессии или рекомендации пусты (и не грузятся) – предложить пройти анкету
+  if (!sessionId && !isLoading && recommendations.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <h2 className="text-2xl font-bold mb-4">Рекомендации отсутствуют</h2>
+          <p className="text-gray-600 mb-6">
+            Вы ещё не прошли анкету. Пройдите опрос, чтобы получить персональные рекомендации предприятий и вакансий.
+          </p>
+          <button
+            onClick={() => navigate('/dashboard/assessment')}
+            className="btn-primary"
+          >
+            Пройти анкету
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && error !== 'Нет активной сессии. Пройдите анкету.') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -50,7 +69,7 @@ export default function RecommendationsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600 mb-4">Нет рекомендаций</p>
+          <p className="text-gray-600 mb-4">Нет рекомендаций, соответствующих вашим предпочтениям</p>
           <button
             onClick={() => navigate('/dashboard/assessment')}
             className="btn-primary"
@@ -84,7 +103,6 @@ export default function RecommendationsPage() {
                 </div>
               </div>
 
-              {/* Enterprise Info */}
               <div className="grid grid-cols-2 gap-4 mb-4 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <FiMapPin size={16} />
@@ -99,13 +117,11 @@ export default function RecommendationsPage() {
                 </div>
               </div>
 
-              {/* Why Recommended */}
               <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-4">
                 <h4 className="font-bold text-sm mb-2">Почему подходит:</h4>
                 <p className="text-sm text-gray-700">{rec.explanation}</p>
               </div>
 
-              {/* Vacancy Info */}
               {rec.Vacancy && (
                 <div className="mb-4">
                   <h4 className="font-bold mb-2">Вакансия:</h4>
@@ -114,14 +130,25 @@ export default function RecommendationsPage() {
                 </div>
               )}
 
-              {/* CTA Buttons */}
               <div className="flex gap-3">
-                <button className="flex-1 btn-primary">
-                  Открыть предприятие
+                <button
+                  onClick={() => {
+                    if (rec.Vacancy?.id) {
+                      navigate(`/vacancy/${rec.Vacancy.id}`);
+                    }
+                  }}
+                  className="flex-1 btn-primary"
+                  disabled={!rec.Vacancy?.id}
+                >
+                  Открыть вакансию
                 </button>
-                <button className="flex-1 btn-secondary text-primary">
+                {/* addToFavorites можно оставить, но в сторе его нет – закомментируем */}
+                {/* <button
+                  onClick={() => addToFavorites(rec.id)}
+                  className="flex-1 btn-secondary text-primary"
+                >
                   Добавить в избранное
-                </button>
+                </button> */}
               </div>
             </div>
           ))}

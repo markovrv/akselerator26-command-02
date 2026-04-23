@@ -1,4 +1,4 @@
-const { User, UserProfile } = require('../models');
+const { User, UserProfile, Enterprise } = require('../models');
 
 class ProfileService {
   async getProfile(userId) {
@@ -22,15 +22,19 @@ class ProfileService {
     return profile;
   }
 
-  async setRole(userId, role) {
+  async setRole(userId, role, enterpriseId = null) {
     const user = await User.findByPk(userId);
-    if (!user) {
-      throw { statusCode: 404, message: 'User not found' };
+    if (!user) throw { statusCode: 404, message: 'User not found' };
+    if (role === 'enterprise_user') {
+      if (!enterpriseId) throw { statusCode: 400, message: 'enterpriseId required' };
+      const enterprise = await Enterprise.findByPk(enterpriseId);
+      if (!enterprise) throw { statusCode: 404, message: 'Enterprise not found' };
+      user.enterpriseId = enterpriseId;
+    } else {
+      user.enterpriseId = null;
     }
-
     user.role = role;
     await user.save();
-
     return user;
   }
 
