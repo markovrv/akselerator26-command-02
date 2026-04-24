@@ -107,10 +107,10 @@ export default function AssessmentPage() {
   const currentQuestion = questions[currentQuestionIndex];
   const progressPercent = ((currentQuestionIndex + 1) / questions.length) * 100;
 
-  const handleAnswer = (value) => {
+  const handleAnswer = (value, next = true) => {
     answerQuestion(currentQuestion.code, value);
     if (currentQuestionIndex < questions.length - 1) {
-      nextQuestion();
+      if (next) nextQuestion();
     }
   };
 
@@ -212,9 +212,9 @@ export default function AssessmentPage() {
                       onChange={(e) => {
                         const currentAnswers = answers[currentQuestion.code] || [];
                         if (e.target.checked) {
-                          handleAnswer([...currentAnswers, option]);
+                          handleAnswer([...currentAnswers, option], false);
                         } else {
-                          handleAnswer(currentAnswers.filter(a => a !== option));
+                          handleAnswer(currentAnswers.filter(a => a !== option), false);
                         }
                       }}
                       className="mr-3"
@@ -248,9 +248,7 @@ export default function AssessmentPage() {
                 onClick={nextQuestion}
                 disabled={!(() => {
                   const answer = answers[currentQuestion.code];
-                  if (currentQuestion.type === 'multi_choice') {
-                    return !answer || answer.length === 0;
-                  }
+                  if (currentQuestion.type === 'multi_choice') return true;
                   return answer === undefined || answer === null;
                 })()}
                 className="flex-1 btn-primary disabled:opacity-50"

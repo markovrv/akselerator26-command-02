@@ -1,15 +1,17 @@
+// src/pages/DashboardPage.jsx
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useAssessmentStore } from '../store/assessmentStore';
-import { FiEdit, FiTrendingUp, FiTarget, FiClipboard } from 'react-icons/fi';
-import { applicationsAPI } from '../services/api';
+import { FiEdit, FiTrendingUp, FiTarget, FiClipboard, FiCalendar } from 'react-icons/fi';
+import { applicationsAPI, toursAPI } from '../services/api';
 
 export default function DashboardPage() {
   const { isAuthenticated } = useAuthStore();
   const { recommendations, getRecommendations, sessionId } = useAssessmentStore();
   const navigate = useNavigate();
   const [applicationsCount, setApplicationsCount] = useState(null);
+  const [tourBookingsCount, setTourBookingsCount] = useState(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -27,7 +29,20 @@ export default function DashboardPage() {
         setApplicationsCount(0);
       }
     };
+
+    // Загружаем бронирования экскурсий
+    const fetchTourBookings = async () => {
+      try {
+        const { data } = await toursAPI.getMyBookings();
+        setTourBookingsCount(data.count);
+      } catch (err) {
+        console.error('Failed to load tour bookings:', err);
+        setTourBookingsCount(0);
+      }
+    };
+
     fetchApplications();
+    fetchTourBookings();
 
     // Если есть активная сессия, но рекомендации ещё не загружены – подгружаем
     if (sessionId && (!recommendations || recommendations.length === 0)) {
@@ -46,7 +61,7 @@ export default function DashboardPage() {
       <div className="container mx-auto">
         <h1 className="text-4xl font-bold mb-12">Личный кабинет</h1>
 
-        <div className="grid grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
           {/* Profile Card */}
           <Link
             to="/dashboard/profile"
@@ -59,7 +74,7 @@ export default function DashboardPage() {
             <p className="text-sm text-gray-600">Отредактировать данные</p>
           </Link>
 
-          {/* My Recommendations Card (заменяет Цифровой паспорт) */}
+          {/* My Recommendations Card */}
           <Link
             to="/dashboard/recommendations"
             className="card hover:shadow-md transition transform hover:scale-105"
@@ -94,10 +109,22 @@ export default function DashboardPage() {
             <h3 className="font-bold mb-2">Мои отклики</h3>
             <p className="text-sm text-gray-600">Отклики на вакансии</p>
           </Link>
+
+          {/* My Tour Bookings Card */}
+          <Link
+            to="/dashboard/tour-bookings"
+            className="card hover:shadow-md transition transform hover:scale-105"
+          >
+            <div className="text-accent text-3xl mb-4">
+              <FiCalendar />
+            </div>
+            <h3 className="font-bold mb-2">Мои записи на экскурсии</h3>
+            <p className="text-sm text-gray-600">Запланированные экскурсии</p>
+          </Link>
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="card bg-gradient-to-br from-blue-50 to-blue-100">
             <h4 className="text-sm text-gray-600 mb-2">Мои отклики</h4>
             <p className="text-3xl font-bold text-accent">
@@ -108,7 +135,9 @@ export default function DashboardPage() {
 
           <div className="card bg-gradient-to-br from-green-50 to-green-100">
             <h4 className="text-sm text-gray-600 mb-2">Записи на экскурсии</h4>
-            <p className="text-3xl font-bold text-success">0</p>
+            <p className="text-3xl font-bold text-success">
+              {tourBookingsCount !== null ? tourBookingsCount : '...'}
+            </p>
             <p className="text-xs text-gray-500 mt-2">запланировано</p>
           </div>
 

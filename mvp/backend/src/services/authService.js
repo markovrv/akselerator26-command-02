@@ -3,7 +3,7 @@ const { User, UserProfile } = require('../models');
 const env = require('../config/env');
 
 class AuthService {
-  async register(email, password, fullName, role = 'seeker') {
+  async register(email, password, fullName, role = 'seeker', enterpriseId = null) {
     // Check if user exists
     const existingUser = await User.findOne({ where: { email: email.toLowerCase() } });
     if (existingUser) {
@@ -16,6 +16,7 @@ class AuthService {
       passwordHash: password,
       role,
       status: 'pending',
+      enterpriseId,
     });
 
     // Create profile
@@ -58,7 +59,7 @@ class AuthService {
     };
     const accessToken = jwt.sign(payload, env.jwt.secret, { expiresIn: env.jwt.expiresIn });
     const refreshToken = jwt.sign({ id: user.id }, env.jwt.refreshSecret, { expiresIn: env.jwt.refreshExpiresIn });
-    return { accessToken, refreshToken, user: { id: user.id, email: user.email, role: user.role } };
+    return { accessToken, refreshToken, user: { id: user.id, email: user.email, role: user.role, enterpriseId: user.enterpriseId || null } };
   }
 
   async refreshAccessToken(refreshToken) {

@@ -3,13 +3,13 @@ const authService = require('../services/authService');
 class AuthController {
   async register(req, res, next) {
     try {
-      const { email, password, fullName, role } = req.body;
+      const { email, password, fullName, role, enterpriseId } = req.body;
 
       if (!email || !password || !fullName) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
 
-      const result = await authService.register(email, password, fullName, role);
+      const result = await authService.register(email, password, fullName, role, enterpriseId);
       res.status(201).json(result);
     } catch (error) {
       next(error);

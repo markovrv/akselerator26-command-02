@@ -1,22 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { FiMail, FiLock, FiUser } from 'react-icons/fi';
+import { enterprisesAPI } from '../services/api';
+import { FiMail, FiLock, FiUser, FiBriefcase } from 'react-icons/fi';
 
 export default function RegisterForm() {
-  const [step, setStep] = useState(1); // 1: credentials, 2: role, 3: confirmation
+  const [step, setStep] = useState(1);
+  const [enterprises, setEnterprises] = useState([]);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     password: '',
     confirmPassword: '',
     role: 'seeker',
+    enterpriseId: '',
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
   const { register } = useAuthStore();
   const navigate = useNavigate();
+
+  // Загружаем список предприятий при монтировании
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await enterprisesAPI.getAll();
+        setEnterprises(data.enterprises || []);
+      } catch (e) {
+        console.error('Failed to load enterprises', e);
+      }
+    })();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -51,20 +65,34 @@ export default function RegisterForm() {
     }
 
     if (step === 2) {
-      setStep(3);
-      setIsLoading(true);
+      // Проверка заполнения предприятия для роли HR
+      if (formData.role === 'enterprise_user' && !formData.enterpriseId) {
+        setError('Выберите предприятие');
+        return;
+      }
 
+      setIsLoading(true);
       try {
         await register(
           formData.email,
           formData.password,
           formData.fullName,
-          formData.role
+          formData.role,
+          formData.role === 'enterprise_user' ? formData.enterpriseId : undefined
         );
-        navigate('/dashboard');
+        navigate(
+          formData.role === 'enterprise_user'
+            ? '/enterprise/dashboard'
+            : '/dashboard'
+        );
       } catch (err) {
-        navigate('/dashboard');
+        navigate(
+          formData.role === 'enterprise_user'
+            ? '/enterprise/dashboard'
+            : '/dashboard'
+        );
         setError(err.response?.data?.error || 'Ошибка регистрации');
+      } finally {
         setIsLoading(false);
       }
     }
@@ -80,12 +108,12 @@ export default function RegisterForm() {
         </div>
       )}
 
-      {/* Step 1: Credentials */}
+      {/* Шаг 1: учетные данные */}
       {step >= 1 && (
         <form onSubmit={handleSubmit} className={step !== 1 ? 'opacity-50 pointer-events-none' : ''}>
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2">ФИО</label>
-            <div className="flex items-center bg-light rounded px-3">
+            <div className="flex items-center bg-gray-100 rounded px-3">
               <FiUser className="text-gray-400" />
               <input
                 type="text"
@@ -93,7 +121,7 @@ export default function RegisterForm() {
                 value={formData.fullName}
                 onChange={handleChange}
                 placeholder="Иван Иванов"
-                className="flex-1 bg-light px-2 py-2 focus:outline-none"
+                className="flex-1 bg-gray-100 px-2 py-2 focus:outline-none"
                 disabled={step > 1}
               />
             </div>
@@ -155,13 +183,15 @@ export default function RegisterForm() {
         </form>
       )}
 
-      {/* Step 2: Choose Role */}
+      {/* Шаг 2: выбор роли */}
       {step >= 2 && (
         <div className={step !== 2 ? 'opacity-50 pointer-events-none' : ''}>
           <p className="text-sm text-gray-600 mb-4">Кто вы?</p>
           <div className="space-y-3 mb-6">
-            <label className="flex items-center p-3 border-2 border-gray-300 rounded cursor-pointer hover:border-accent transition"
-              style={{ borderColor: formData.role === 'seeker' ? '#0066cc' : '#d0d0d0' }}
+            <label
+              className={`flex items-center p-3 border-2 rounded cursor-pointer transition ${
+                formData.role === 'seeker' ? 'border-blue-600' : 'border-gray-300'
+              }`}
             >
               <input
                 type="radio"
@@ -177,8 +207,10 @@ export default function RegisterForm() {
               </span>
             </label>
 
-            <label className="flex items-center p-3 border-2 border-gray-300 rounded cursor-pointer hover:border-accent transition"
-              style={{ borderColor: formData.role === 'student' ? '#0066cc' : '#d0d0d0' }}
+            <label
+              className={`flex items-center p-3 border-2 rounded cursor-pointer transition ${
+                formData.role === 'student' ? 'border-blue-600' : 'border-gray-300'
+              }`}
             >
               <input
                 type="radio"
@@ -193,7 +225,48 @@ export default function RegisterForm() {
                 <p className="text-xs text-gray-500">Ищу практику/стажировку</p>
               </span>
             </label>
+
+            <label
+              className={`flex items-center p-3 border-2 rounded cursor-pointer transition ${
+                formData.role === 'enterprise_user' ? 'border-blue-600' : 'border-gray-300'
+              }`}
+            >
+              <input
+                type="radio"
+                name="role"
+                value="enterprise_user"
+                checked={formData.role === 'enterprise_user'}
+                onChange={handleChange}
+                className="mr-3"
+              />
+              <span>
+                <strong>Представитель предприятия</strong>
+                <p className="text-xs text-gray-500">HR, менеджер по персоналу</p>
+              </span>
+            </label>
           </div>
+
+          {formData.role === 'enterprise_user' && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-2">
+                Выберите предприятие
+              </label>
+              <select
+                name="enterpriseId"
+                value={formData.enterpriseId}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-600"
+                required
+              >
+                <option value="">-- Выберите --</option>
+                {enterprises.map((ent) => (
+                  <option key={ent.id} value={ent.id}>
+                    {ent.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="flex gap-3">
             <button onClick={() => setStep(1)} className="flex-1 btn-secondary">
@@ -206,16 +279,9 @@ export default function RegisterForm() {
         </div>
       )}
 
-      {/* Step 3: Confirmation */}
-      {step >= 3 && (
-        <div className={step !== 3 ? 'opacity-50 pointer-events-none' : ''}>
-          <p className="text-center text-gray-600 mb-4">Загрузка...</p>
-        </div>
-      )}
-
       <p className="text-center text-gray-600 mt-6">
         Уже есть аккаунт?{' '}
-        <Link to="/auth/login" className="text-accent font-medium hover:underline">
+        <Link to="/auth/login" className="text-blue-600 font-medium hover:underline">
           Войти
         </Link>
       </p>

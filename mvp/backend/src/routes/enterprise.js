@@ -22,8 +22,12 @@ router.patch('/applications/:id/status', enterpriseController.updateApplicationS
 // Управление экскурсиями
 router.get('/tours', enterpriseController.getMyTours);
 router.post('/tours', enterpriseController.createTour);
-router.put('/tours/:id', enterpriseController.updateTour);
+router.get('/tours/bookings', enterpriseController.getAllTourBookings);
 router.get('/tours/:id/bookings', enterpriseController.getTourBookings);
+router.put('/tours/:id', enterpriseController.updateTour);
+router.get('/tours/:id', enterpriseController.getTour);
+router.delete('/tours/:id', enterpriseController.deleteTour);
+router.patch('/tours/:tourId/bookings/:bookingId/status', enterpriseController.updateTourBookingStatus);
 
 // Профиль предприятия
 router.get('/profile', enterpriseController.getEnterpriseProfile);

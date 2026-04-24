@@ -1,8 +1,16 @@
+// src/pages/VacancyDetailPage.jsx
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { vacanciesAPI, applicationsAPI } from '../services/api';
+import { vacanciesAPI, applicationsAPI, toursAPI } from '../services/api';
 import { useAuthStore } from '../store/authStore';
-import { FiMapPin, FiDollarSign, FiCalendar, FiCheckCircle, FiSend } from 'react-icons/fi';
+import {
+  FiMapPin,
+  FiDollarSign,
+  FiCalendar,
+  FiCheckCircle,
+  FiSend,
+  FiUsers,
+} from 'react-icons/fi';
 
 export default function VacancyDetailPage() {
   const { id } = useParams();
@@ -13,6 +21,14 @@ export default function VacancyDetailPage() {
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
   const [coverNote, setCoverNote] = useState('');
+
+  // Состояния для экскурсий предприятия
+  const [enterpriseTours, setEnterpriseTours] = useState([]);
+  const [toursLoading, setToursLoading] = useState(false);
+
+  // Состояния для бронирования экскурсии (как в ToursPage)
+  const [bookingTourId, setBookingTourId] = useState(null);
+  const [bookingSuccess, setBookingSuccess] = useState(null);
 
   const fetchVacancy = useCallback(async () => {
     try {
@@ -28,6 +44,24 @@ export default function VacancyDetailPage() {
   useEffect(() => {
     fetchVacancy();
   }, [fetchVacancy]);
+
+  // Загрузка экскурсий предприятия после получения вакансии
+  const fetchEnterpriseTours = useCallback(async () => {
+    if (!vacancy?.Enterprise?.id) return;
+    setToursLoading(true);
+    try {
+      const { data } = await toursAPI.getAll({ enterpriseId: vacancy.Enterprise.id });
+      setEnterpriseTours(data.tours || []);
+    } catch (error) {
+      console.error('Error fetching tours:', error);
+    } finally {
+      setToursLoading(false);
+    }
+  }, [vacancy]);
+
+  useEffect(() => {
+    fetchEnterpriseTours();
+  }, [fetchEnterpriseTours]);
 
   const handleApply = async () => {
     if (!isAuthenticated) {
@@ -47,6 +81,26 @@ export default function VacancyDetailPage() {
       alert(error.response?.data?.error || 'Ошибка при отклике');
     } finally {
       setApplying(false);
+    }
+  };
+
+  const handleBookTour = async (tourId) => {
+    if (!isAuthenticated) {
+      alert('Пожалуйста, войдите для записи на экскурсию');
+      return;
+    }
+
+    setBookingTourId(tourId);
+    try {
+      await toursAPI.book(tourId);
+      setBookingSuccess(tourId);
+      // Обновляем данные экскурсий, чтобы отобразилось актуальное количество мест
+      await fetchEnterpriseTours();
+      setTimeout(() => setBookingSuccess(null), 3000);
+    } catch (error) {
+      alert(error.response?.data?.error || 'Ошибка при записи на экскурсию');
+    } finally {
+      setBookingTourId(null);
     }
   };
 
@@ -179,6 +233,84 @@ export default function VacancyDetailPage() {
                 Подробнее о предприятии
               </Link>
             </div>
+
+            {/* Enterprise Tours */}
+            {vacancy.Enterprise?.id && (
+              <div className="mt-6">
+                {toursLoading ? (
+                  <div className="bg-white rounded-lg shadow-sm p-6 text-center text-gray-500">
+                    Загрузка экскурсий...
+                  </div>
+                ) : enterpriseTours.length > 0 ? (
+                  <div className="bg-white rounded-lg shadow-sm p-8">
+                    <h2 className="text-xl font-bold mb-4">Экскурсии на предприятии</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {enterpriseTours.map((tour) => (
+                        <div
+                          key={tour.id}
+                          className="border rounded-lg p-4 hover:shadow-md transition"
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="font-bold">{tour.title}</h3>
+                            <span
+                              className={`px-2 py-1 text-xs rounded ${
+                                tour.format === 'online'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-green-100 text-green-700'
+                              }`}
+                            >
+                              {tour.format === 'online' ? 'Онлайн' : 'Офлайн'}
+                            </span>
+                          </div>
+                          {tour.description && (
+                            <p className="text-sm text-gray-600 mb-2">
+                              {tour.description.length > 100
+                                ? tour.description.substring(0, 100) + '...'
+                                : tour.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-3 text-sm text-gray-500 mb-3">
+                            <span className="flex items-center gap-1">
+                              <FiCalendar size={14} />
+                              {new Date(tour.startAt).toLocaleDateString('ru-RU')}
+                            </span>
+                            {tour.format === 'offline' && (
+                              <span className="flex items-center gap-1">
+                                <FiMapPin size={14} />
+                                {vacancy.Enterprise?.city}
+                              </span>
+                            )}
+                            <span className="flex items-center gap-1">
+                              <FiUsers size={14} />
+                              {tour.capacity - (tour.TourBookings?.length || 0)} мест
+                            </span>
+                          </div>
+
+                          {/* Кнопка записи – полностью как в ToursPage */}
+                          {bookingSuccess === tour.id ? (
+                            <button
+                              disabled
+                              className="w-full btn bg-green-500 text-white flex items-center justify-center gap-2 py-2"
+                            >
+                              <FiCheckCircle size={16} />
+                              Вы записаны!
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleBookTour(tour.id)}
+                              disabled={bookingTourId === tour.id}
+                              className="w-full btn-primary py-2"
+                            >
+                              {bookingTourId === tour.id ? 'Запись...' : 'Записаться'}
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}

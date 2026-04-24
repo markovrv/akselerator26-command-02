@@ -14,6 +14,16 @@ import VacancyDetailPage from './pages/VacancyDetailPage';
 import ToursPage from './pages/ToursPage';
 import MyApplicationsPage from './pages/MyApplicationsPage';
 import MyTourBookingsPage from './pages/MyTourBookingsPage';
+import EnterpriseDashboardPage from './pages/enterprise/EnterpriseDashboardPage';
+import EnterpriseProfilePage from './pages/enterprise/EnterpriseProfilePage';
+import EnterpriseVacanciesPage from './pages/enterprise/EnterpriseVacanciesPage';
+import EnterpriseVacancyFormPage from './pages/enterprise/EnterpriseVacancyFormPage';
+import EnterpriseApplicationsPage from './pages/enterprise/EnterpriseApplicationsPage';
+import EnterpriseToursPage from './pages/enterprise/EnterpriseToursPage';
+import EnterpriseTourFormPage from './pages/enterprise/EnterpriseTourFormPage';
+import EnterpriseTourBookingsPage from './pages/enterprise/EnterpriseTourBookingsPage';
+import EnterpriseAllTourBookingsPage from './pages/enterprise/EnterpriseAllTourBookingsPage';
+import ProtectedRoute from './components/ProtectedRoute';
 import './styles/globals.css';
 import './App.css';
 
@@ -75,6 +85,19 @@ function App() {
                 </div>
               </div>
             } />
+            <Route element={<ProtectedRoute roles={['enterprise_user']} />}>
+              <Route path="/enterprise/dashboard" element={<EnterpriseDashboardPage />} />
+              <Route path="/enterprise/profile" element={<EnterpriseProfilePage />} />
+              <Route path="/enterprise/vacancies" element={<EnterpriseVacanciesPage />} />
+              <Route path="/enterprise/vacancies/new" element={<EnterpriseVacancyFormPage />} />
+              <Route path="/enterprise/vacancies/:id/edit" element={<EnterpriseVacancyFormPage />} />
+              <Route path="/enterprise/applications" element={<EnterpriseApplicationsPage />} />
+              <Route path="/enterprise/tours" element={<EnterpriseToursPage />} />
+              <Route path="/enterprise/tours/new" element={<EnterpriseTourFormPage />} />
+              <Route path="/enterprise/tours/:id/edit" element={<EnterpriseTourFormPage />} />
+              <Route path="/enterprise/tours/:id/bookings" element={<EnterpriseTourBookingsPage />} />
+              <Route path="/enterprise/tour-bookings" element={<EnterpriseAllTourBookingsPage />} />
+            </Route>
           </Routes>
         </main>
         <Footer />

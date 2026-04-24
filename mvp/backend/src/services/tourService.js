@@ -1,4 +1,4 @@
-const { Tour, TourBooking, Enterprise, User } = require('../models');
+const { Tour, TourBooking, Enterprise, User, UserProfile } = require('../models');
 const { Op } = require('sequelize');
 
 class TourService {
@@ -16,7 +16,7 @@ class TourService {
       model: Enterprise,
       where: { moderationStatus: 'approved' },
       required: true,
-    }];
+    }, { model: TourBooking }];
 
     const tours = await Tour.findAll({
       where,
@@ -105,6 +105,14 @@ class TourService {
     return bookings;
   }
 
+  async delUserBookings(id) {
+    const bookings = await TourBooking.destroy({
+      where: { id }
+    });
+
+    return bookings;
+  }
+
   async getEnterpriseBookings(enterpriseId) {
     const bookings = await TourBooking.findAll({
       include: [{
@@ -144,6 +152,61 @@ class TourService {
     });
     return bookings;
   }
+
+
+  async getTourByIdForEnterprise(tourId, enterpriseId) {
+    const tour = await Tour.findOne({
+      where: { id: tourId, enterpriseId },
+      include: [{ model: Enterprise }]
+    });
+    if (!tour) {
+      throw { statusCode: 404, message: 'Tour not found or access denied' };
+    }
+    return tour;
+  }
+
+  async deleteTour(tourId, enterpriseId) {
+    const tour = await Tour.findOne({ where: { id: tourId, enterpriseId } });
+    if (!tour) {
+      throw { statusCode: 404, message: 'Tour not found or access denied' };
+    }
+    await tour.update({ status: 'cancelled' });
+    return tour;
+  }
+
+  async updateBookingStatus(tourId, bookingId, status, enterpriseId) {
+    const tour = await Tour.findOne({ where: { id: tourId, enterpriseId } });
+    if (!tour) {
+      throw { statusCode: 404, message: 'Tour not found or access denied' };
+    }
+    const booking = await TourBooking.findOne({ where: { id: bookingId, tourId } });
+    if (!booking) {
+      throw { statusCode: 404, message: 'Booking not found' };
+    }
+    const validStatuses = ['new', 'confirmed', 'cancelled', 'visited'];
+    if (!validStatuses.includes(status)) {
+      throw { statusCode: 400, message: 'Invalid status' };
+    }
+    await booking.update({ status });
+    return booking;
+  }
+
+  async getAllEnterpriseBookings(enterpriseId) {
+    const bookings = await TourBooking.findAll({
+      include: [
+        {
+          model: Tour,
+          where: { enterpriseId },
+          required: true,
+          include: [{ model: Enterprise }]
+        },
+        { model: User, attributes: ['id', 'email'], include: ['UserProfile'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+    return bookings;
+  }
+
 
 }
 

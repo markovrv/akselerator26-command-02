@@ -2,13 +2,21 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toursAPI } from '../services/api';
 import { useAuthStore } from '../store/authStore';
-import { FiCalendar, FiMapPin, FiCheckCircle, FiXCircle, FiExternalLink } from 'react-icons/fi';
+import {
+  FiCalendar,
+  FiMapPin,
+  FiCheckCircle,
+  FiXCircle,
+  FiExternalLink,
+  FiTrash2,
+} from 'react-icons/fi';
 
 export default function MyTourBookingsPage() {
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingId, setCancellingId] = useState(null); // id отменяемой записи
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -29,12 +37,41 @@ export default function MyTourBookingsPage() {
     fetchBookings();
   }, [isAuthenticated, navigate, fetchBookings]);
 
+  const handleCancelBooking = async (bookingId) => {
+    if (!confirm('Вы уверены, что хотите отменить запись на экскурсию?')) return;
+
+    setCancellingId(bookingId);
+    try {
+      await toursAPI.cancelBooking(bookingId);
+      // Обновляем список бронирований
+      await fetchBookings();
+      alert('Запись на экскурсию отменена');
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+      alert('Не удалось отменить запись. Попробуйте позже.');
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
   const getStatusBadge = (status) => {
     const badges = {
       new: { class: 'bg-blue-100 text-blue-700', icon: FiCalendar, label: 'Новая заявка' },
-      confirmed: { class: 'bg-green-100 text-green-700', icon: FiCheckCircle, label: 'Подтверждена' },
-      cancelled: { class: 'bg-red-100 text-red-700', icon: FiXCircle, label: 'Отменена' },
-      visited: { class: 'bg-gray-100 text-gray-700', icon: FiCheckCircle, label: 'Посещена' },
+      confirmed: {
+        class: 'bg-green-100 text-green-700',
+        icon: FiCheckCircle,
+        label: 'Подтверждена',
+      },
+      cancelled: {
+        class: 'bg-red-100 text-red-700',
+        icon: FiXCircle,
+        label: 'Отменена',
+      },
+      visited: {
+        class: 'bg-gray-100 text-gray-700',
+        icon: FiCheckCircle,
+        label: 'Посещена',
+      },
     };
     return badges[status] || badges.new;
   };
@@ -54,11 +91,10 @@ export default function MyTourBookingsPage() {
           </div>
         ) : bookings.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <p className="text-gray-600 mb-4">Вы пока не записались ни на одну экскурсию</p>
-            <button
-              onClick={() => navigate('/tours')}
-              className="btn-primary"
-            >
+            <p className="text-gray-600 mb-4">
+              Вы пока не записались ни на одну экскурсию
+            </p>
+            <button onClick={() => navigate('/tours')} className="btn-primary">
               Найти экскурсии
             </button>
           </div>
@@ -68,16 +104,20 @@ export default function MyTourBookingsPage() {
               const badge = getStatusBadge(booking.status);
               const StatusIcon = badge.icon;
               const tour = booking.Tour;
+              const canCancel =
+                booking.status === 'new' || booking.status === 'confirmed';
 
               return (
                 <div key={booking.id} className="card hover:shadow-lg transition">
                   <div className="flex justify-between items-start">
                     <div className="flex gap-4">
-                      <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${
-                        tour?.format === 'online'
-                          ? 'bg-gradient-to-br from-blue-400 to-blue-600'
-                          : 'bg-gradient-to-br from-green-400 to-green-600'
-                      }`}>
+                      <div
+                        className={`w-16 h-16 rounded-lg flex items-center justify-center ${
+                          tour?.format === 'online'
+                            ? 'bg-gradient-to-br from-blue-400 to-blue-600'
+                            : 'bg-gradient-to-br from-green-400 to-green-600'
+                        }`}
+                      >
                         <span className="text-white text-xl font-bold">
                           {tour?.format === 'online' ? '📱' : '🏭'}
                         </span>
@@ -89,7 +129,10 @@ export default function MyTourBookingsPage() {
                           <span className="flex items-center gap-1">
                             <FiCalendar size={14} />
                             {new Date(tour?.startAt).toLocaleDateString('ru-RU')} в{' '}
-                            {new Date(tour?.startAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                            {new Date(tour?.startAt).toLocaleTimeString('ru-RU', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
                           </span>
                           {tour?.format === 'offline' && (
                             <span className="flex items-center gap-1">
@@ -100,14 +143,26 @@ export default function MyTourBookingsPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm ${badge.class}`}>
+                    <div className="text-right flex flex-col items-end gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm ${badge.class}`}
+                      >
                         <StatusIcon size={14} />
                         {badge.label}
                       </span>
-                      <p className="text-sm text-gray-500 mt-2">
+                      <p className="text-sm text-gray-500">
                         Записался: {new Date(booking.createdAt).toLocaleDateString('ru-RU')}
                       </p>
+                      {canCancel && (
+                        <button
+                          onClick={() => handleCancelBooking(booking.id)}
+                          disabled={cancellingId === booking.id}
+                          className="btn-danger btn-sm flex items-center gap-1"
+                        >
+                          <FiTrash2 size={14} />
+                          {cancellingId === booking.id ? 'Отмена...' : 'Отменить запись'}
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -124,8 +179,7 @@ export default function MyTourBookingsPage() {
                       onClick={() => navigate(`/enterprise/${tour?.Enterprise?.slug}`)}
                       className="btn-secondary btn-sm flex items-center gap-1"
                     >
-                      <FiExternalLink size={14} />
-                      О предприятии
+                      <FiExternalLink size={14} />О предприятии
                     </button>
                     {tour?.format === 'online' && booking.status === 'confirmed' && (
                       <button className="btn-primary btn-sm">

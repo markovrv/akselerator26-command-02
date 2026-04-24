@@ -4,8 +4,24 @@ import { useAuthStore } from '../store/authStore';
 import { FiArrowRight, FiTarget, FiUsers, FiBarChart } from 'react-icons/fi';
 
 export default function Home() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user, logout } = useAuthStore();
   const navigate = useNavigate();
+  
+  const handleEnterpriseConnect = () => {
+    if (isAuthenticated) {
+      if (user?.role === 'enterprise_user') {
+        // User is logged in with enterprise account, navigate to HR panel
+        navigate('/enterprise/dashboard');
+      } else {
+        // User is logged in with regular account, log out and go to registration
+        logout();
+        navigate('/auth/register');
+      }
+    } else {
+      // User is not logged in, go to registration
+      navigate('/auth/register');
+    }
+  };
   
   return (
     <div className="home-page">
@@ -132,9 +148,9 @@ export default function Home() {
                 <li>Быстрее закрытие вакансий</li>
                 <li>Ниже текучесть новых сотрудников</li>
               </ul>
-              <Link to="/auth/register" className="btn btn-primary">
+              <button onClick={handleEnterpriseConnect} className="btn btn-primary">
                 Подключить предприятие
-              </Link>
+              </button>
             </div>
             <div className="enterprise-visual"></div>
           </div>

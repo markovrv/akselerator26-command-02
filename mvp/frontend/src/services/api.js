@@ -1,24 +1,19 @@
+// src/services/api.js
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
 
 const api = axios.create({
   baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// Interceptor для добавления токена
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// Interceptor для обработки ошибок
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -33,71 +28,91 @@ api.interceptors.response.use(
 
 // Auth API
 export const authAPI = {
-  register: (email, password, fullName, role) =>
-    api.post('/auth/register', { email, password, fullName, role }),
-  login: (email, password) =>
-    api.post('/auth/login', { email, password }),
-  refreshToken: (refreshToken) =>
-    api.post('/auth/refresh-token', { refreshToken }),
-  verifyEmail: () =>
-    api.post('/auth/verify-email'),
+  register: (email, password, fullName, role, enterpriseId) =>
+    api.post('/auth/register', { email, password, fullName, role, enterpriseId }),
+  login: (email, password) => api.post('/auth/login', { email, password }),
+  refreshToken: (refreshToken) => api.post('/auth/refresh-token', { refreshToken }),
+  getProfile: () => api.get('/profile'),
+  setRole: (role, enterpriseId) => api.post('/profile/role', { role, enterpriseId }),
 };
 
 // Profile API
 export const profileAPI = {
   getProfile: () => api.get('/profile'),
   updateProfile: (data) => api.patch('/profile', data),
-  setRole: (role) => api.post('/profile/role', { role }),
 };
 
 // Assessment API
 export const assessmentAPI = {
   getQuestions: () => api.get('/assessment/questions'),
-  startAssessment: (roleContext) =>
-    api.post('/assessment/start', { roleContext }),
+  startAssessment: (roleContext) => api.post('/assessment/start', { roleContext }),
   answerQuestion: (sessionId, questionCode, answer) =>
     api.post(`/assessment/${sessionId}/answer`, { questionCode, answer }),
-  completeAssessment: (sessionId) =>
-    api.post(`/assessment/${sessionId}/complete`),
+  completeAssessment: (sessionId) => api.post(`/assessment/${sessionId}/complete`),
 };
 
 // Recommendations API
 export const recommendationsAPI = {
   generateRecommendations: (sessionId, filters) =>
     api.post('/recommendations/generate', {}, { params: { sessionId, ...filters } }),
-  getRecommendations: (sessionId) =>
-    api.get('/recommendations', { params: { sessionId } }),
+  getRecommendations: (sessionId) => api.get('/recommendations', { params: { sessionId } }),
 };
 
-// Enterprises API
+// Enterprises API (public)
 export const enterprisesAPI = {
   getAll: (filters) => api.get('/enterprises', { params: filters }),
   getBySlug: (slug) => api.get(`/enterprises/${slug}`),
 };
 
-// Vacancies API
+// Vacancies API (public)
 export const vacanciesAPI = {
   getAll: (filters) => api.get('/vacancies', { params: filters }),
   getById: (id) => api.get(`/vacancies/${id}`),
 };
 
-// Tours API
+// Tours API (public)
 export const toursAPI = {
   getAll: (filters) => api.get('/tours', { params: filters }),
   getById: (id) => api.get(`/tours/${id}`),
   book: (id) => api.post(`/tours/${id}/book`),
   getMyBookings: () => api.get('/tours/me/bookings'),
+  cancelBooking: (bookingId) => api.delete(`/tours/bookings/${bookingId}`),
 };
 
-// Applications API
+// Applications API (public)
 export const applicationsAPI = {
   create: (vacancyId, type, coverNote) =>
     api.post('/applications', { vacancyId, type, coverNote }),
   getMyApplications: () => api.get('/applications/me'),
-  getEnterpriseApplications: (enterpriseId) =>
-    api.get('/applications/enterprise', { params: { enterpriseId } }),
-  updateStatus: (id, status) =>
-    api.patch(`/applications/${id}/status`, { status }),
+};
+
+// ===== ENTERPRISE PRIVATE API (HR) =====
+export const enterpriseAPI = {
+  getDashboard: () => api.get('/enterprise/dashboard'),
+  getProfile: () => api.get('/enterprise/profile'),
+  updateProfile: (data) => api.patch('/enterprise/profile', data),
+
+  // Vacancies
+  getVacancies: () => api.get('/enterprise/vacancies'),
+  createVacancy: (data) => api.post('/enterprise/vacancies', data),
+  updateVacancy: (id, data) => api.put(`/enterprise/vacancies/${id}`, data),
+  deleteVacancy: (id) => api.delete(`/enterprise/vacancies/${id}`),
+
+  // Applications
+  getApplications: () => api.get('/enterprise/applications'),
+  updateApplicationStatus: (id, status) =>
+    api.patch(`/enterprise/applications/${id}/status`, { status }),
+
+  // Tours
+  getTours: () => api.get('/enterprise/tours'),
+  createTour: (data) => api.post('/enterprise/tours', data),
+  updateTour: (id, data) => api.put(`/enterprise/tours/${id}`, data),
+  deleteTour: (id) => api.delete(`/enterprise/tours/${id}`),
+  getTourBookings: (id) => api.get(`/enterprise/tours/${id}/bookings`),
+  getTour: (id) => api.get(`/enterprise/tours/${id}`),
+  updateTourBookingStatus: (tourId, bookingId, status) =>
+    api.patch(`/enterprise/tours/${tourId}/bookings/${bookingId}/status`, { status }),
+  getAllTourBookings: () => api.get('/enterprise/tours/bookings'),
 };
 
 export default api;

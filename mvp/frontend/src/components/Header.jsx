@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { FiLogOut, FiUser, FiMenu, FiX } from 'react-icons/fi';
+import { FiLogOut, FiUser, FiMenu, FiX, FiBriefcase } from 'react-icons/fi';
 import { authAPI } from '../services/api';
 
 export default function Header() {
@@ -35,8 +35,8 @@ export default function Header() {
           Вперёд по маршрутам
         </Link>
 
-        <button 
-          className="menu-toggle" 
+        <button
+          className="menu-toggle"
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Меню"
         >
@@ -51,6 +51,9 @@ export default function Header() {
             <Link to="/vacancies" className="nav-link" onClick={() => setMenuOpen(false)}>
               Вакансии
             </Link>
+            <Link to="/tours" className="nav-link" onClick={() => setMenuOpen(false)}>
+              Экскурсии
+            </Link>
             <Link to="/how-it-works" className="nav-link" onClick={() => setMenuOpen(false)}>
               Как это работает
             </Link>
@@ -59,6 +62,11 @@ export default function Header() {
           <div className="nav-auth">
             {isAuthenticated ? (
               <div className="auth-section">
+                {user?.role === 'enterprise_user' && (
+                  <Link to="/enterprise/dashboard" className="mr-4 flex items-center text-sm text-blue-600 hover:underline">
+                    <FiBriefcase size={14} className="mr-1" /> HR-панель
+                  </Link>
+                )}
                 <Link to="/dashboard" className="user-badge" onClick={() => setMenuOpen(false)}>
                   <FiUser size={16} />
                   <span className="user-email">{user?.email}</span>

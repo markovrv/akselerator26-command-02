@@ -39,6 +39,8 @@ export default function ToursPage() {
     try {
       await toursAPI.book(tourId);
       setBookingSuccess(tourId);
+      // Обновляем данные туров, чтобы отобразилось актуальное количество мест
+      await fetchTours();
       setTimeout(() => setBookingSuccess(null), 3000);
     } catch (error) {
       alert(error.response?.data?.error || 'Ошибка при записи на экскурсию');

@@ -58,6 +58,19 @@ class TourController {
     }
   }
 
+  async delUserBookings(req, res, next) {
+    try {
+      const { id } = req.params;
+      const bookings = await tourService.delUserBookings(id);
+      res.json({
+        count: bookings.length,
+        bookings,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getEnterpriseBookings(req, res, next) {
     try {
       const enterpriseId = req.query.enterpriseId;

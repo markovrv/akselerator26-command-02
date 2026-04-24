@@ -157,6 +157,50 @@ class EnterpriseController {
   }
 
 
+  async getTour(req, res, next) {
+    try {
+      const { id } = req.params;
+      const enterpriseId = req.user.enterpriseId;
+      const tour = await tourService.getTourByIdForEnterprise(id, enterpriseId);
+      res.json(tour);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteTour(req, res, next) {
+    try {
+      const { id } = req.params;
+      const enterpriseId = req.user.enterpriseId;
+      await tourService.deleteTour(id, enterpriseId);
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateTourBookingStatus(req, res, next) {
+    try {
+      const { tourId, bookingId } = req.params;
+      const { status } = req.body;
+      const enterpriseId = req.user.enterpriseId;
+      const booking = await tourService.updateBookingStatus(tourId, bookingId, status, enterpriseId);
+      res.json(booking);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getAllTourBookings(req, res, next) {
+    try {
+      const enterpriseId = req.user.enterpriseId;
+      const bookings = await tourService.getAllEnterpriseBookings(enterpriseId);
+      res.json({ bookings });
+    } catch (error) {
+      next(error);
+    }
+  }
+
 }
 
 module.exports = new EnterpriseController();

@@ -371,7 +371,7 @@ img {
 
 /* Hero Section */
 .hero-section {
-  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 50%, #172554 100%);
+  background: url('hero.png');
   padding: 4rem 1rem;
   text-align: center;
   color: white;
@@ -555,7 +555,7 @@ img {
 
 .enterprise-visual {
   height: 20rem;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: url('/enterprize.png');
   border-radius: 0.75rem;
 }
 

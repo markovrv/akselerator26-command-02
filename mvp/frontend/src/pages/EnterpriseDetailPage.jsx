@@ -287,7 +287,7 @@ export default function EnterpriseDetailPage() {
         </div>
 
         {/* Sticky Action Panel */}
-        <div className="bg-white rounded-lg shadow-sm p-6 sticky bottom-4">
+        {/* <div className="bg-white rounded-lg shadow-sm p-6 sticky bottom-4">
           <h3 className="font-bold mb-4">Действия</h3>
           <div className="flex gap-4">
             <Link
@@ -301,7 +301,7 @@ export default function EnterpriseDetailPage() {
               Задать вопрос HR
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

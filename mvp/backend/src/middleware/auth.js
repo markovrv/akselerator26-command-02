@@ -6,8 +6,7 @@ const authMiddleware = (req, res, next) => {
   if (!token) return res.status(401).json({ error: 'No token provided' });
   try {
     const decoded = jwt.verify(token, env.jwt.secret);
-    req.user = decoded;   // здесь должно быть поле enterpriseId
-    console.log('Decoded:', decoded);
+    req.user = decoded;
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Invalid token' });

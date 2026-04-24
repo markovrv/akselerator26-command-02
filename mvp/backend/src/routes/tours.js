@@ -8,6 +8,7 @@ router.get('/:id', optionalAuth, tourController.getById);
 router.post('/', authMiddleware, tourController.create);
 router.post('/:id/book', authMiddleware, tourController.book);
 router.get('/me/bookings', authMiddleware, tourController.getUserBookings);
+router.delete('/bookings/:id', authMiddleware, tourController.delUserBookings);
 router.get('/enterprise/bookings', authMiddleware, tourController.getEnterpriseBookings);
 
 module.exports = router;
