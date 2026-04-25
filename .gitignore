@@ -1,43 +1,49 @@
 # Dependencies
 node_modules/
-*/node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
 
-# Environment variables
+# Environment
 .env
 .env.local
 .env.*.local
-
-# Build outputs
-dist/
-*/dist/
-build/
-*/build/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*.swn
+*~
+.DS_Store
+
+# Build
+dist/
+build/
+.next/
+out/
+
+# Logs
+logs/
+*.log
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-logs/
-
-# Docker
-docker-compose.override.yml
-
 # Testing
+.coverage
 coverage/
 .nyc_output/
 
 # Misc
-*.tmp
-*.temp
-
-server/data/app.db
-server/data/app.db-shm
-server/data/app.db-wal
+.cache/
+tmp/
+temp/

@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+vite.config.js
+eslint.config.js
+postcss.config.js
+tailwind.config.js
+public
