@@ -29,11 +29,6 @@ out/
 logs/
 *.log
 
-# Database
-*.sqlite
-*.sqlite3
-*.db
-
 # OS
 .DS_Store
 Thumbs.db
